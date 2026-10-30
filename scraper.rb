@@ -54,7 +54,7 @@ class Scraper
       sleep 1 if index.positive?
       scrape_period(period)
     end
-    puts "Finished - added #{@saved} records"
+    puts "", "Finished - added #{@saved} records"
   end
 
   private
@@ -70,6 +70,7 @@ class Scraper
 
   def scrape_period(period)
     url = LIST_URL + period
+    puts "", "Scraping applications lodged #{period}..."
     page = @agent.get(url)
     summary = page.at("#application-search-results .results-summary-title")
     raise "No results summary found at #{url}" unless summary
@@ -118,6 +119,7 @@ class Scraper
   end
 
   def save(record)
+    puts "Storing #{record['council_reference']} - #{record['address']}"
     puts "RECORD: #{record.inspect}" if @debug
     ScraperWiki.save_sqlite(["council_reference"], record)
     @saved += 1

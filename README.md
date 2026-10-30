@@ -26,10 +26,28 @@ Environment variables:
 - `MORPH_PERIOD` - optional; one of `yesterday`, `thisweek`, `lastweek`, `thismonth` or `lastmonth`. By default both `thismonth` and `lastmonth` are scraped.
 - `MORPH_DEBUG` - optional; when set, prints each record as it is saved.
 
-Expected output is a count per period followed by:
+Expected output is a heading for each period, a `Storing <reference> - <address>` line for each application, a count per period and a final total, for example:
 
 ```
-Finished - added N records
+Running ruby 3.2.2
+
+Scraping applications lodged thismonth...
+Storing CD-1556/2026 - 94 Old Kent Road MOUNT LEWIS NSW 2190
+Storing CD-1555/2026 - 92 Old Kent Road MOUNT LEWIS NSW 2190
+...
+Storing CC-401/2026 - 71 Helen Street SEFTON NSW 2162
+Storing CC-400/2026 - 52 Roberts Road GREENACRE NSW 2190
+Finished thismonth - processed 238 records
+
+Scraping applications lodged lastmonth...
+Storing CD-1363/2026 - 43 Victor Avenue PICNIC POINT NSW 2213
+Storing CD-1362/2026 - 13 Byloss Street CHESTER HILL NSW 2162
+...
+Storing DA-1044/2026 - 7 Sir Joseph Banks Street BANKSTOWN NSW 2200
+Storing CC-360/2026 - 808 Henry Lawson Drive PICNIC POINT NSW 2213
+Finished lastmonth - processed 213 records
+
+Finished - added 451 records
 ```
 
-with N usually a few hundred, and a `data.sqlite` file in the working directory.
+The total is usually a few hundred. The records are saved to `data.sqlite` in the working directory.
