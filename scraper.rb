@@ -78,17 +78,24 @@ class Scraper
     url = LIST_URL + period
     puts "", "Scraping applications lodged #{period}..."
     page = @agent.get(url)
-    summary = page.at("#application-search-results .results-summary-title")
-    raise "No results summary found at #{url}" unless summary
-
-    expected = clean_text(summary.text)[/\A(\d+) applications? found/, 1]
-    raise "Unexpected results summary #{clean_text(summary.text).inspect} at #{url}" unless expected
-
     cards = page.search("article.application-result-card")
-    raise "Expected #{expected} applications but found #{cards.size} at #{url}" unless cards.size == expected.to_i
+    check_count(page, cards.size, url)
+    puts "No applications lodged #{period}" if cards.empty?
 
     cards.each_with_index { |card, index| save_card(card, "#{period} card #{index + 1}") }
     puts "Finished #{period} - processed #{cards.size} records"
+  end
+
+  # Checks the cards found against the count the page states. A period with no
+  # applications is normal, for example a quiet 1st of the month, and the page
+  # may then not give a count. PlanningAlerts flags long gaps itself.
+  def check_count(page, found, url)
+    summary = clean_text(page.at("#application-search-results .results-summary-title")&.text)
+    expected = summary[/\A(\d+) applications? found/, 1]
+    return if expected.nil? && found.zero?
+    raise "No results summary found at #{url}" if summary.empty?
+    raise "Unexpected results summary #{summary.inspect} at #{url}" unless expected
+    raise "Expected #{expected} applications but found #{found} at #{url}" unless found == expected.to_i
   end
 
   def save_card(card, position)

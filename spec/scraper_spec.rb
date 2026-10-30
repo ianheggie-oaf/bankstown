@@ -105,9 +105,31 @@ RSpec.describe Scraper do
       expect { run_with(html) }.to raise_error(RuntimeError, /Expected 7 applications but found 6/)
     end
 
-    it "stops when there is no results summary" do
+    it "stops when there are applications but no results summary" do
       html = fixture.sub("results-summary-title", "something-else")
       expect { run_with(html) }.to raise_error(RuntimeError, /No results summary found/)
+    end
+
+    it "stops when the page states applications but none are found" do
+      html = page_with([]).sub("0 applications found", "3 applications found")
+      expect { run_with(html) }.to raise_error(RuntimeError, /Expected 3 applications but found 0/)
+    end
+  end
+
+  describe "a period with no applications" do
+    it "finishes normally when the page says 0 applications found" do
+      output = run_with(page_with([]))
+      expect(saved).to be_empty
+      expect(output).to include("No applications lodged thisweek")
+      expect(output).to include("Finished - saved 0 records")
+    end
+
+    # The empty page hasn't been seen yet, so it may word or leave out the count
+    it "finishes normally when the page gives no count" do
+      html = page_with([]).sub("0 applications found", "No applications found")
+      expect { run_with(html) }.not_to raise_error
+      html = page_with([]).sub("results-summary-title", "something-else")
+      expect { run_with(html) }.not_to raise_error
     end
   end
 

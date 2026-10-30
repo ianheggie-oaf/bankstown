@@ -11,6 +11,7 @@ Issues with this authority are tracked in the shared issue tracker: [planningale
 - The tracker lists every application lodged in a period (`yesterday`, `thisweek`, `lastweek`, `thismonth` or `lastmonth`) on one page, with no paging. It covers development applications, complying development and construction certificates, including those from private certifiers.
 - Each application is an `article.application-result-card` with the reference, a `Type - description` paragraph, and `dt`/`dd` pairs for Address and Lodged.
 - The page says how many applications it found. The scraper raises an error if the number of cards doesn't match.
+- A period with no applications, such as a quiet 1st of the month, is normal. The scraper prints `No applications lodged <period>` and carries on, even if the page gives no count. PlanningAlerts flags long gaps in new applications itself.
 - DAs on exhibition are only published on the NSW Planning Portal, under PAN references, so they are not scraped here.
 
 ## Running
