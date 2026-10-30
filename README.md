@@ -20,6 +20,15 @@ bundle install
 bundle exec ruby scraper.rb
 ```
 
+To run the tests and style checks:
+
+```
+bundle exec rake
+bundle exec rubocop
+```
+
+The tests use a saved copy of the tracker's page in `spec/fixtures/lodged.html`, cut down to one card per case, with made-up references and addresses. They don't contact the council's site. A coverage summary is printed at the end, and the full report is written to `coverage/index.html`.
+
 Environment variables:
 
 - `MORPH_AUSTRALIAN_PROXY` - optional; when set (e.g. `http://morph:password@au.proxy.oaf.org.au:8888`) all requests go through the Australian proxy.

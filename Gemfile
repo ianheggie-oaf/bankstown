@@ -14,5 +14,9 @@ gem "scraperwiki", git: "https://github.com/openaustralia/scraperwiki-ruby.git",
 gem "sqlite3", "~> 2.2.0" # sqlite3 2.3.0 does NOT run on heroku-18!
 
 group :development do
+  gem "rake", "~> 12.3"
+  gem "rspec", "~> 3.13"
   gem "rubocop"
+  gem "simplecov", "~> 0.18.0"
+  gem "simplecov-console"
 end
