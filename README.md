@@ -47,7 +47,9 @@ Storing DA-1044/2026 - 7 Sir Joseph Banks Street BANKSTOWN NSW 2200
 Storing CC-360/2026 - 808 Henry Lawson Drive PICNIC POINT NSW 2213
 Finished lastmonth - processed 213 records
 
-Finished - added 451 records
+Finished - saved 451 records
 ```
+
+An application with no application number, details link or address, or with an unreadable lodged date, is skipped with a `Skipping bad application` line, and the total then also says how many were skipped. The run stops with an error once more than 10 + 20% of the saved count have been skipped.
 
 The total is usually a few hundred. The records are saved to `data.sqlite` in the working directory.

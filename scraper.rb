@@ -31,6 +31,10 @@ class Scraper
   DEFAULT_PERIODS = %w[thismonth lastmonth].freeze
   PERIODS = %w[yesterday thisweek lastweek thismonth lastmonth].freeze
 
+  # An application missing something PlanningAlerts needs is skipped with a
+  # warning, but the run stops once there are more than 10 + 20% of good ones
+  class BadApplication < StandardError; end
+
   def self.run
     new.run
   end
@@ -46,6 +50,7 @@ class Scraper
     end
     @debug = !ENV["MORPH_DEBUG"].to_s.empty?
     @saved = 0
+    @skipped = 0
   end
 
   def run
@@ -54,7 +59,8 @@ class Scraper
       sleep 1 if index.positive?
       scrape_period(period)
     end
-    puts "", "Finished - added #{@saved} records"
+    # Doesn't check which records are new, so reports them all as saved
+    puts "", "Finished - saved #{@saved} records#{", skipped #{@skipped} bad applications" if @skipped.positive?}"
   end
 
   private
@@ -81,21 +87,46 @@ class Scraper
     cards = page.search("article.application-result-card")
     raise "Expected #{expected} applications but found #{cards.size} at #{url}" unless cards.size == expected.to_i
 
-    cards.each { |card| save(parse_card(card)) }
+    cards.each_with_index { |card, index| save_card(card, "#{period} card #{index + 1}") }
     puts "Finished #{period} - processed #{cards.size} records"
   end
 
+  def save_card(card, position)
+    save(parse_card(card))
+  rescue BadApplication => e
+    @skipped += 1
+    puts "Skipping bad application (#{position}): #{e.message}"
+    return if @skipped <= 10 + (@saved / 5.0)
+
+    raise "Too many bad applications: skipped #{@skipped}, saved #{@saved}"
+  end
+
+  # Raises BadApplication when the reference, details link or address is
+  # missing, or the lodged date can't be read
   def parse_card(card)
     link = card.at("a.application-details-link")
+    reference = clean_text(link&.text)
+    raise BadApplication, "no application number" if reference.empty?
+    raise BadApplication, "#{reference} has no details link" if link["href"].to_s.empty?
+
     fields = card_fields(card)
+    address = fields["Address"].to_s
+    raise BadApplication, "#{reference} has no address" if address.empty?
+
     {
-      "council_reference" => clean_text(link.text),
-      "address" => fields.fetch("Address"),
+      "council_reference" => reference,
+      "address" => address,
       "description" => description(card),
       "info_url" => URI.join(BASE_URL, link["href"]).to_s,
       "date_scraped" => Date.today.to_s,
-      "date_received" => Date.strptime(fields.fetch("Lodged"), "%d/%m/%Y").to_s,
+      "date_received" => parse_lodged(reference, fields["Lodged"]),
     }
+  end
+
+  def parse_lodged(reference, lodged)
+    Date.strptime(lodged.to_s, "%d/%m/%Y").to_s
+  rescue Date::Error
+    raise BadApplication, "#{reference} has an unreadable lodged date #{lodged.inspect}"
   end
 
   # Maps each dt label to its dd value, keeping the first of any repeated label
