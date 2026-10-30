@@ -101,13 +101,12 @@ class Scraper
     raise "Too many bad applications: skipped #{@skipped}, saved #{@saved}"
   end
 
-  # Raises BadApplication when the reference, details link or address is
-  # missing, or the lodged date can't be read
+  # Raises BadApplication when the reference or address is missing, as
+  # PlanningAlerts can't use the record without them
   def parse_card(card)
     link = card.at("a.application-details-link")
     reference = clean_text(link&.text)
     raise BadApplication, "no application number" if reference.empty?
-    raise BadApplication, "#{reference} has no details link" if link["href"].to_s.empty?
 
     fields = card_fields(card)
     address = fields["Address"].to_s
@@ -117,16 +116,24 @@ class Scraper
       "council_reference" => reference,
       "address" => address,
       "description" => description(card),
-      "info_url" => URI.join(BASE_URL, link["href"]).to_s,
+      "info_url" => info_url(link),
       "date_scraped" => Date.today.to_s,
       "date_received" => parse_lodged(reference, fields["Lodged"]),
-    }
+    }.compact
   end
 
+  # Falls back to the tracker's search page when a card has no details link
+  def info_url(link)
+    href = link["href"].to_s
+    URI.join(BASE_URL, href.empty? ? "/ApplicationSearch" : href).to_s
+  end
+
+  # Leaves date_received out, with a warning, when the lodged date can't be read
   def parse_lodged(reference, lodged)
     Date.strptime(lodged.to_s, "%d/%m/%Y").to_s
   rescue Date::Error
-    raise BadApplication, "#{reference} has an unreadable lodged date #{lodged.inspect}"
+    puts "Warning: #{reference} has an unreadable lodged date #{lodged.inspect}"
+    nil
   end
 
   # Maps each dt label to its dd value, keeping the first of any repeated label
@@ -137,11 +144,12 @@ class Scraper
   end
 
   # The description starts with the application type, for example
-  # "Development Application - Construction of a dual occupancy"
+  # "Development Application - Construction of a dual occupancy". Falls back
+  # to the type when the application has no description of its own.
   def description(card)
     text = clean_text(card.at("p.application-result-description")&.text)
-    _type, description = text.split(" - ", 2)
-    description.to_s.empty? ? text : description
+    type, description = text.delete_suffix(" -").split(" - ", 2)
+    description.to_s.empty? ? type.to_s : description
   end
 
   # Collapses whitespace, including the non-breaking spaces used in addresses

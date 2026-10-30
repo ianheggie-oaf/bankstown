@@ -50,6 +50,6 @@ Finished lastmonth - processed 213 records
 Finished - saved 451 records
 ```
 
-An application with no application number, details link or address, or with an unreadable lodged date, is skipped with a `Skipping bad application` line, and the total then also says how many were skipped. The run stops with an error once more than 10 + 20% of the saved count have been skipped.
+An application with no application number or address is skipped with a `Skipping bad application` line, and the total then also says how many were skipped. Other gaps don't skip it. With no description of its own it gets its application type, for example "Development Application". With no details link it links to the tracker's search page. With an unreadable lodged date, `date_received` is left out and a warning is printed. The run stops with an error once more than 10 + 20% of the saved count have been skipped.
 
 The total is usually a few hundred. The records are saved to `data.sqlite` in the working directory.
