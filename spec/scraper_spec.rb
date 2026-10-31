@@ -105,6 +105,11 @@ RSpec.describe Scraper do
       expect { run_with(html) }.to raise_error(RuntimeError, /Expected 7 applications but found 6/)
     end
 
+    it "stops when the results summary isn't a count" do
+      html = fixture.sub("6 applications found", "Something went wrong")
+      expect { run_with(html) }.to raise_error(RuntimeError, /Unexpected results summary "Something went wrong"/)
+    end
+
     it "stops when there are applications but no results summary" do
       html = fixture.sub("results-summary-title", "something-else")
       expect { run_with(html) }.to raise_error(RuntimeError, /No results summary found/)
@@ -141,6 +146,19 @@ RSpec.describe Scraper do
 
     it "rejects an unknown MORPH_PERIOD" do
       expect { run_with(fixture, period: "fortnight") }.to raise_error(RuntimeError, /Unknown MORPH_PERIOD "fortnight"/)
+    end
+  end
+
+  describe "MORPH_DEBUG" do
+    around do |example|
+      ENV["MORPH_DEBUG"] = "1"
+      example.run
+    ensure
+      ENV.delete("MORPH_DEBUG")
+    end
+
+    it "prints each record as it is saved" do
+      expect(run_with(fixture)).to include('RECORD: {"council_reference"=>"DA-9001/2026"')
     end
   end
 
